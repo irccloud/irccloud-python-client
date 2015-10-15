@@ -2,7 +2,7 @@ Official IRCCloud Python Client
 ===============================
 
 This is the beginnings of an IRCCloud python client, which we aim to
-officially support.
+officially support. It's at a pretty early stage currently.
 
 Requirements
 -------

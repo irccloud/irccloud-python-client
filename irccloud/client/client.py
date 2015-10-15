@@ -3,10 +3,10 @@ from __future__ import division, absolute_import, print_function, unicode_litera
 import asyncio
 import logging
 import json
-from http_client import IRCCloudHTTPClient
-from messages import BUFFER_MESSAGES
-from log_render import TextLogRenderer
-from model import Connection, Buffer, User
+from .messages import BUFFER_MESSAGES
+from .http_client import IRCCloudHTTPClient
+from .log_render import TextLogRenderer
+from .model import Connection, Buffer, User
 
 
 IGNORE_MESSAGES = {'idle', 'backlog_starts', 'end_of_backlog', 'backlog_complete', 'num_invites',
@@ -15,7 +15,8 @@ CREATION_MESSAGES = {'makeserver', 'makebuffer', 'channel_init'}
 
 
 class IRCCloudClient(object):
-    def __init__(self, host="www.irccloud.com", backlog_size=500):
+    """ A Python client for IRCCloud, which connects using websockets. """
+    def __init__(self, host="www.irccloud.com"):
         self.log = logging.getLogger(__name__)
         self.irccloud = IRCCloudHTTPClient(host)
         self.stream_id = None

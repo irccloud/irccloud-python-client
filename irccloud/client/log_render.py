@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from string import Template
 from collections import defaultdict
-from messages import VERBATIM, MESSAGES, STATS
+from .messages import VERBATIM, MESSAGES, STATS
 
 
 def eid_to_datetime(eid, tz=None):
