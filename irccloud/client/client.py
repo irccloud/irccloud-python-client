@@ -5,7 +5,6 @@ import logging
 import json
 from .messages import BUFFER_MESSAGES
 from .http_client import IRCCloudHTTPClient
-from .log_render import TextLogRenderer
 from .model import Connection, Buffer, User
 
 
@@ -23,7 +22,7 @@ class IRCCloudClient(object):
         self.user_info = None
         self.connections = {}
         self.buffers = {}
-        self.log_renderer = TextLogRenderer()
+        self.message_callback = None
 
     def login(self, email, password):
         self.irccloud.login(email, password)
@@ -76,8 +75,11 @@ class IRCCloudClient(object):
         if message['type'] == 'join':
             buff.members.append(User(message['nick'], message['realname'], message['usermask']))
 
-        if not oob:
-            print(self.log_renderer.render_line(message))
+        if not oob and self.message_callback is not None:
+            self.message_callback(buff, message)
+
+    def register_message_callback(self, callback):
+        self.message_callback = callback
 
     @asyncio.coroutine
     def run(self):
