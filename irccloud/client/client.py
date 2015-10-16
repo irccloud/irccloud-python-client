@@ -24,6 +24,7 @@ class IRCCloudClient(object):
         self.buffers = {}
         self.message_callback = None
         self.state_callback = None
+        self.running = True
 
     def login(self, email, password):
         self.irccloud.login(email, password)
@@ -91,6 +92,9 @@ class IRCCloudClient(object):
     def register_state_callback(self, callback):
         self.state_callback = callback
 
+    def disconnect(self):
+        self.running = False
+
     @asyncio.coroutine
     def run(self):
         if self.state_callback:
@@ -100,7 +104,7 @@ class IRCCloudClient(object):
         if self.state_callback:
             self.state_callback('connected')
 
-        while True:
+        while self.running:
             res = yield from socket.recv()
             if res is None:
                 break
