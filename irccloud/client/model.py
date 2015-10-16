@@ -14,9 +14,11 @@ class Connection(object):
 class Buffer(object):
     def __init__(self, id, name, buffer_type, connection, max_backlog=500):
         self.id = id
+        self.name = name
         self.buffer_type = buffer_type
         self.connection = connection
         self.lines = deque(maxlen=max_backlog)
+        self.archived = False
         self.members = []
 
     def remove_member(self, nick):
