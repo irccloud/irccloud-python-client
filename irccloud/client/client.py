@@ -9,7 +9,7 @@ from .model import Connection, Buffer, User
 
 
 IGNORE_MESSAGES = {'idle', 'backlog_starts', 'end_of_backlog', 'backlog_complete', 'num_invites',
-                   'heartbeat_echo', 'isupport_params', 'whois_response'}
+                   'heartbeat_echo', 'isupport_params', 'whois_response', 'user_account'}
 CREATION_MESSAGES = {'makeserver', 'makebuffer', 'channel_init'}
 
 
@@ -23,17 +23,23 @@ class IRCCloudClient(object):
         self.connections = {}
         self.buffers = {}
         self.message_callback = None
+        self.state_callback = None
 
     def login(self, email, password):
         self.irccloud.login(email, password)
 
     def oob_fetch(self, url):
         self.log.info("Starting OOB fetch...")
+        if self.state_callback:
+            self.state_callback('backlog_fetch')
+
         oob = self.irccloud.fetch(url)
         for message in oob:
             self.handle_message(message, oob=True)
         self.log.info("OOB processing completed. %s connections, %s buffers.",
                       len(self.connections), len(self.buffers))
+        if self.state_callback:
+            self.state_callback('online')
 
     def handle_message(self, message, oob=False):
         mtype = message['type']
@@ -61,6 +67,7 @@ class IRCCloudClient(object):
         elif mtype == 'makebuffer':
             conn = self.connections[message['cid']]
             buff = Buffer(message['bid'], message['name'], message['type'], conn)
+            buff.archived = message['archived']
             conn.buffers.append(buff)
             self.buffers[message['bid']] = buff
         elif mtype == 'channel_init':
@@ -81,12 +88,23 @@ class IRCCloudClient(object):
     def register_message_callback(self, callback):
         self.message_callback = callback
 
+    def register_state_callback(self, callback):
+        self.state_callback = callback
+
     @asyncio.coroutine
     def run(self):
+        if self.state_callback:
+            self.state_callback('connecting')
+
         socket = yield from self.irccloud.websocket()
+        if self.state_callback:
+            self.state_callback('connected')
+
         while True:
             res = yield from socket.recv()
             if res is None:
                 break
             self.handle_message(json.loads(res))
         yield from socket.close()
+        if self.state_callback:
+            self.state_callback('disconnected')
