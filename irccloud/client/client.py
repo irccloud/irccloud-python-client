@@ -2,7 +2,7 @@
 from __future__ import division, absolute_import, print_function, unicode_literals
 import asyncio
 import logging
-import json
+import ujson as json
 from .messages import BUFFER_MESSAGES
 from .http_client import IRCCloudHTTPClient
 from .model import Connection, Buffer, User
@@ -15,9 +15,10 @@ CREATION_MESSAGES = {'makeserver', 'makebuffer', 'channel_init'}
 
 class IRCCloudClient(object):
     """ A Python client for IRCCloud, which connects using websockets. """
-    def __init__(self, host="www.irccloud.com"):
+    def __init__(self, host="www.irccloud.com", track_channel_state=True):
         self.log = logging.getLogger(__name__)
         self.irccloud = IRCCloudHTTPClient(host)
+        self.track_channel_state = track_channel_state
         self.stream_id = None
         self.user_info = None
         self.connections = {}
@@ -34,8 +35,9 @@ class IRCCloudClient(object):
         if self.state_callback:
             self.state_callback('backlog_fetch')
 
-        oob = self.irccloud.fetch(url)
-        for message in oob:
+        oob_data = self.irccloud.fetch(url)
+        self.log.info("Parsing OOB data")
+        for message in json.loads(oob_data):
             self.handle_message(message, oob=True)
         self.log.info("OOB processing completed. %s connections, %s buffers.",
                       len(self.connections), len(self.buffers))
@@ -73,15 +75,17 @@ class IRCCloudClient(object):
             self.buffers[message['bid']] = buff
         elif mtype == 'channel_init':
             buff = self.buffers[message['bid']]
-            for member in message['members']:
-                buff.members.append(User(member['nick'], member['realname'], member['usermask']))
+            if self.track_channel_state:
+                for member in message['members']:
+                    buff.members.append(User(member['nick'], member['realname'], member['usermask']))
 
     def handle_buffer_message(self, bid, message, oob):
         buff = self.buffers[bid]
-        if message['type'] in ('quit', 'part'):
-            buff.remove_member(message['nick'])
-        if message['type'] == 'join':
-            buff.members.append(User(message['nick'], message['realname'], message['usermask']))
+        if self.track_channel_state:
+            if message['type'] in ('quit', 'part'):
+                buff.remove_member(message['nick'])
+            if message['type'] == 'join':
+                buff.members.append(User(message['nick'], message['realname'], message['usermask']))
 
         if not oob and self.message_callback is not None:
             self.message_callback(buff, message)

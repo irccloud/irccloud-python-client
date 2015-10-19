@@ -9,4 +9,8 @@ setup(name='irccloud-client',
       author_email='russ@irccloud.com',
       url='https://www.github.com/irccloud/python',
       packages=['irccloud.client'],
-      )
+      install_requires=[
+        'websockets == 2.6',
+        'ujson',
+        'requests'
+      ])

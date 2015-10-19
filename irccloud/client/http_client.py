@@ -59,4 +59,4 @@ class IRCCloudHTTPClient(object):
         url = self.get_url(path)
         response = self.http.get(url)
         response.raise_for_status()
-        return response.json()
+        return response.text
