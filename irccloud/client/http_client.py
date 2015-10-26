@@ -11,6 +11,10 @@ class IRCCloudHTTPError(Exception):
     pass
 
 
+class RateLimitedError(Exception):
+    pass
+
+
 class IRCCloudHTTPClient(object):
     def __init__(self, host, verify_certificate=True):
         # TODO: Test this SSL verification logic.
@@ -47,6 +51,10 @@ class IRCCloudHTTPClient(object):
         }
         headers = {'x-auth-formtoken': token}
         response = self.http.post(self.get_url("/chat/login"), data=request_data, headers=headers)
+        if response.status_code == 400:
+            data = response.json()
+            if data['message'] == 'rate_limited':
+                raise RateLimitedError(data)
         response.raise_for_status()
         data = response.json()
         if not data['success']:
