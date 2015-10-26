@@ -9,6 +9,14 @@ class Connection(object):
         self.port = None
         self.hostname = None
         self.buffers = []
+        self.status = None
+
+    def get_buffer(self, name):
+        for buf in self.buffers:
+            if buf.name == name:
+                return buf
+        return None
+
     def __repr__(self):
         return "<Connection id: %s, hostname: %s>" % (self.id, self.hostname)
 
