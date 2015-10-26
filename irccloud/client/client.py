@@ -15,9 +15,10 @@ CREATION_MESSAGES = {'makeserver', 'makebuffer', 'channel_init'}
 
 class IRCCloudClient(object):
     """ A Python client for IRCCloud, which connects using websockets. """
-    def __init__(self, host="www.irccloud.com", track_channel_state=True):
+    def __init__(self, host="www.irccloud.com", verify_certificate=True,
+                 track_channel_state=True):
         self.log = logging.getLogger(__name__)
-        self.irccloud = IRCCloudHTTPClient(host)
+        self.irccloud = IRCCloudHTTPClient(host, verify_certificate=verify_certificate)
         self.track_channel_state = track_channel_state
         self.stream_id = None
         self.user_info = None

@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import division, absolute_import, print_function, unicode_literals
 from urllib.parse import urljoin
+import ssl
 import logging
 import requests
 import websockets
@@ -11,10 +12,18 @@ class IRCCloudHTTPError(Exception):
 
 
 class IRCCloudHTTPClient(object):
-    def __init__(self, host):
+    def __init__(self, host, verify_certificate=True):
+        # TODO: Test this SSL verification logic.
         self.log = logging.getLogger(__name__)
         self.host = host
+
         self.http = requests.Session()
+        self.http.verify = verify_certificate
+        self.ssl_context = ssl.create_default_context()
+        if not verify_certificate:
+            self.ssl_context.check_hostname = False
+            self.ssl_context.verify_mode = ssl.CERT_NONE
+
         self.http.headers['User-Agent'] = 'IRCCloud-python'
         self.logged_in = False
 
@@ -53,7 +62,9 @@ class IRCCloudHTTPClient(object):
             'Cookie': 'session=%s' % (self.http.cookies['session'])
         }
         self.log.info("Connecting websocket...")
-        return websockets.connect('wss://%s/' % self.host, extra_headers=headers)
+        return websockets.connect('wss://%s/' % self.host,
+                                  extra_headers=headers,
+                                  ssl=self.ssl_context)
 
     def fetch(self, path):
         url = self.get_url(path)
