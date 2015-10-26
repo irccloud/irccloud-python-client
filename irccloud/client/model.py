@@ -9,6 +9,8 @@ class Connection(object):
         self.port = None
         self.hostname = None
         self.buffers = []
+    def __repr__(self):
+        return "<Connection id: %s, hostname: %s>" % (self.id, self.hostname)
 
 
 class Buffer(object):
@@ -26,5 +28,8 @@ class Buffer(object):
             if member.nick == nick:
                 self.members.remove(member)
                 return
+
+    def __repr__(self):
+        return "<Buffer id: %s, name: %s>" % (self.id, self.name)
 
 User = namedtuple('User', 'nick realname usermask')
